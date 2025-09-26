@@ -50,6 +50,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     asc="{state.asc}"
     page="{ state.page }"
     show-content-digest="{props.showContentDigest}"
+    show-tag-history="{props.showTagHistory}"
     is-image-remove-activated="{props.isImageRemoveActivated}"
     onReverseOrder="{ onReverseOrder }"
     registry-url="{ props.registryUrl }"
@@ -129,7 +130,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
               .sort(self.tagComparator);
             window.requestAnimationFrame(self.onResize);
             self.update({
-              page: Math.min(state.page, getNumPages(tags)),
+              page: Math.min(state.page, getNumPages(tags, props.tagsPerPage)),
               tags,
             });
           } else if (this.status === 404) {
@@ -153,7 +154,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
       },
 
       onPageUpdate(idx) {
-        const labels = getPageLabels(this.state.page, getNumPages(this.state.tags));
+        const labels = getPageLabels(this.state.page, getNumPages(this.state.tags, this.props.tagsPerPage));
         const page = labels[idx].page;
         this.update({
           page: page,

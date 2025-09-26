@@ -8,9 +8,9 @@
 
 ## Overview
 
-This project aims to provide a simple and complete user interface for your private docker registry. You can customize the interface with various options. The major option is `SINGLE_REGISTRY` which allows you to disable the dynamic selection of docker registeries (same behavior as the old **static** tag).
+This project aims to provide a simple and complete user interface for your private docker registry. You can customize the interface with various options. The major option is `SINGLE_REGISTRY` which allows you to disable the dynamic selection of docker registries (same behavior as the old **static** tag).
 
-You may need the [migration guide from 1.x to 2.x](https://github.com/Joxit/docker-registry-ui/wiki/Migrating-from-1.x-to-2.x) or [the 1.x readme](https://github.com/Joxit/docker-registry-ui/blob/8fe3adf12540d1316cb57628ebe86a392a703d90/README.md)
+You may need the [migration guide from 1.x to 2.x](https://github.com/Joxit/docker-registry-ui/wiki/Migrating-from-1.x-to-2.x) or [the 1.x readme](https://github.com/Joxit/docker-registry-ui/blob/8fe3adf12540d1316cb57628ebe86a392a703d90/README.md). The project support both [docker registry v2](https://github.com/distribution/distribution/releases/tag/v2.0.0) and [docker registry v3](https://github.com/distribution/distribution/releases/tag/v3.0.0).
 
 This web user interface uses [Riot](https://github.com/Riot/riot) the react-like user interface micro-library and [riot-mui](https://github.com/kysonic/riot-mui) components.
 
@@ -67,12 +67,12 @@ Checkout all options in [Available options](#available-options) section.
     -   This means you are using a UI with HTTPS and your registry is using HTTP (unsecured). When you are on a HTTPS site, you can't get HTTP content. Upgrade you registry with a HTTPS connection.
 -   Why the default nginx `Host` is set to `$http_host` ?
     -   This fixes the issue [#88](https://github.com/Joxit/docker-registry-ui/issues/88). More about this in [#113](https://github.com/Joxit/docker-registry-ui/issues/113).
--   Why OPTIONS (aka preflight requests) and DELETE fails with 401 status code (using Basic Auth) ?
-    -   This is caused by a bug in docker registry, it returns 401 status requests on preflight requests, this breaks [W3C preflight-request specification](https://www.w3.org/TR/cors/#preflight-request). I suggest to have your UI on the same domain than your registry e.g. registry.example.com/ui/ **or** use `NGINX_PROXY_PASS_URL` **or** configure a nginx/apache/haproxy in front of your registry that returns 200 on each OPTIONS requests. (see [#104](https://github.com/Joxit/docker-registry-ui/issues/104), [#204](https://github.com/Joxit/docker-registry-ui/issues/204), [#207](https://github.com/Joxit/docker-registry-ui/issues/207), [#214](https://github.com/Joxit/docker-registry-ui/issues/214), [#266](https://github.com/Joxit/docker-registry-ui/issues/266)).
+-   Why OPTIONS (aka preflight requests) and DELETE fails with 401 status code (using Basic Auth) or why the UI says to check my `Access-Control-Allow-Origin` ?
+    -   This is caused by a bug in docker registry, it returns 401 status requests on preflight requests, this breaks [W3C preflight-request specification](https://www.w3.org/TR/cors/#preflight-request). I contacted docker registry maintainers and this will never be fixed ([distribution/distribution#4458](https://github.com/distribution/distribution/issues/4458)). I suggest to have your UI on the same domain than your registry e.g. registry.example.com/ui/ **or** use `NGINX_PROXY_PASS_URL` **or** configure a nginx/apache/haproxy in front of your registry that returns 200 on each OPTIONS requests. (see [#104](https://github.com/Joxit/docker-registry-ui/issues/104), [#204](https://github.com/Joxit/docker-registry-ui/issues/204), [#207](https://github.com/Joxit/docker-registry-ui/issues/207), [#214](https://github.com/Joxit/docker-registry-ui/issues/214), [#266](https://github.com/Joxit/docker-registry-ui/issues/266), [#278](https://github.com/Joxit/docker-registry-ui/issues/278)).
 -   Can I use the docker registry ui as a standalone application (with Electron) ?
     -   Yes, check out the example [here](https://github.com/Joxit/docker-registry-ui/tree/main/examples/electron). (see [#129](https://github.com/Joxit/docker-registry-ui/pull/129))
 -   I deleted images through the UI, but they are still present on the server. How can I delete them?
-    - When you delete an image with the UI, only the reference is deleted and not the content. To remove dangling images, you need to run the garbage collector of the registry with the command `registry garbage-collect config.yml` or `docker exec registry registry garbage-collect config.yml`. (see [#77](https://github.com/Joxit/docker-registry-ui/issues/77) [#147](https://github.com/Joxit/docker-registry-ui/issues/147))
+    - When you delete an image with the UI, only the reference is deleted and not the content. To remove dangling images, you need to run the garbage collector of the registry with the command `registry garbage-collect config.yml` or `docker exec registry registry garbage-collect config.yml`. (see [#77](https://github.com/Joxit/docker-registry-ui/issues/77), [#147](https://github.com/Joxit/docker-registry-ui/issues/147))
 -   Why when I delete one tag, all tags with the same SHA are deleted ?
     - This a docker registry API limitation, there is only one way to [delete images with tag](https://docs.docker.com/registry/spec/api/#deleting-an-image), it's by its `name` and its `manifest` (it's a sha of the content). So when you delete a tag, this will delete all tags of this image with the same SHA/manifest.
 -   Can I run the container with an unprivileged user ?
@@ -83,6 +83,8 @@ Checkout all options in [Available options](#available-options) section.
     - You should add a CORS Policy on your bucket, check the issue [#193](https://github.com/Joxit/docker-registry-ui/issues/193).
 -   Why my docker registry server is returning an error `pagination number invalid` ?
     - Since docker registry server 2.8.2 there is default limit of 1000 images in catalog. If you need more images update the configuration `REGISTRY_CATALOG_MAXENTRIES` with your max value and check the issue [#306](https://github.com/Joxit/docker-registry-ui/issues/306).
+-   I'm using `NGINX_PROXY_PASS_URL`, my registry server has been recreated and the UI cannot connect with the message `[error] 176#176: *2 connect() failed (111: Connection refused) while connecting to upstream`, what can I do?
+    - Nginx get the IP of all addresses only once at runtime, since your container has been recreated, its IP changed too. To prevent this kind of issue, you may use the option `NGINX_RESOLVER` and set to `127.0.0.11`.
 
 Need more informations ? Try my [examples](https://github.com/Joxit/docker-registry-ui/tree/main/examples) or open an issue.
 
@@ -103,6 +105,7 @@ Some env options are available for use this interface for **only one server** (w
 - `NGINX_PROXY_HEADER_*`: Update the default Nginx configuration and **set custom headers** for your backend docker registry via environment variable and file (`/etc/nginx/.env`). Only when `NGINX_PROXY_PASS_URL` is used (see [#89](https://github.com/Joxit/docker-registry-ui/pull/89)). Since 1.2.3
 - `NGINX_PROXY_PASS_HEADER_*`: Update the default Nginx configuration and **forward custom headers** to your backend docker registry via environment variable and file (`/etc/nginx/.env`). Only when `NGINX_PROXY_PASS_URL` is used (see [#206](https://github.com/Joxit/docker-registry-ui/issues/206)). Since 2.1.0
 - `NGINX_LISTEN_PORT`: Listen on a port other than 80, you can also change the default user and set to nginx `--user nginx` (see [#224](https://github.com/Joxit/docker-registry-ui/issues/224) and [#234](https://github.com/Joxit/docker-registry-ui/pull/234)). (default: `80` when the user is root, `8080` otherwise). Since 2.2.0
+- `NGINX_RESOLVER`: Add [`resolver`](http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver) directive to the nginx configuration for dynamic dns resolving. The value when you are using a docker network is `127.0.0.11`, you can set a custom DNS server too with a valid time. This is not needed when you are using kubernetes. (see [#333](https://github.com/Joxit/docker-registry-ui/issues/333) and [#339](https://github.com/Joxit/docker-registry-ui/issues/339)). (default: ``). Since 2.5.5
 - `DEFAULT_REGISTRIES`: List of comma separated registry URLs (e.g `http://registry.example.com,http://registry:5000`), available only when `SINGLE_REGISTRY=false` (see [#219](https://github.com/Joxit/docker-registry-ui/pull/219)). (default: ` `). Since 2.1.0
 - `READ_ONLY_REGISTRIES`: Deactivate dialog for remove and add new registries, available only when `SINGLE_REGISTRY=false` (see [#219](https://github.com/Joxit/docker-registry-ui/pull/219)). (default: `false`). Since 2.1.0
 - `SHOW_CATALOG_NB_TAGS`: Show number of tags per images on catalog page and hide images with 0 tags. This will produce + nb images requests, **not recommended on large registries** (see [#161](https://github.com/Joxit/docker-registry-ui/issues/161) and [#239](https://github.com/Joxit/docker-registry-ui/pull/239)). (default: `false`). Since 2.2.0
@@ -116,7 +119,7 @@ Some env options are available for use this interface for **only one server** (w
 - `CATALOG_MAX_BRANCHES`: Set the maximum repository/namespace to expand (e.g. `joxit/docker-registry-ui` `joxit/` is the repository/namespace). Can be 0 to disable branching. (see [#319](https://github.com/Joxit/docker-registry-ui/pull/319)). (default: `1`). Since 2.5.0
 - `TAGLIST_PAGE_SIZE`: Set the number of tags to display in one page. (default: `100`). Since 2.5.0
 - `REGISTRY_SECURED`: By default, the UI will check on every requests if your registry is secured or not (you will see `401` responses in your console). Set to `true` if your registry uses Basic Authentication and divide by two the number of call to your registry. (default `false`). Since 2.5.0
-
+- `SHOW_TAG_HISTORY`: Whether to show the tag history feature or not. Allows to simplify the user interface by hiding it form the tag list if set to `false`. (default: `true`).
 There are some examples with [docker-compose](https://docs.docker.com/compose/) and docker-registry-ui as proxy [here](https://github.com/Joxit/docker-registry-ui/tree/main/examples/ui-as-proxy/) or docker-registry-ui as standalone [here](https://github.com/Joxit/docker-registry-ui/tree/main/examples/ui-as-standalone/).
 
 ### Theme options
@@ -125,16 +128,17 @@ This featureswas added to version 2.4.0. See more about this in [#283](https://g
 
 | Environment variable | light theme value | dark theme value |
 | --- | --- | --- |
-| `THEME_PRIMARY_TEXT` | `#25313b` | `#8A9EBA` |
-| `THEME_NEUTRAL_TEXT` | `#777777` | `#36527A` |
+| `THEME_PRIMARY_TEXT` | `#25313b` | `#98a8bd` |
+| `THEME_NEUTRAL_TEXT` | `#777777` | `#6d7fab` |
 | `THEME_BACKGROUND` | `#ffffff` | `#22272e` |
-| `THEME_HOVER_BACKGROUND` | `#eeeeee` | `#30404D` |
-| `THEME_ACCENT_TEXT` | `#6680a1` | `#5684FF` |
+| `THEME_HOVER_BACKGROUND` | `#eeeeee` | `#343a4b` |
+| `THEME_ACCENT_TEXT` | `#5f7796` | `#5c88ff` |
 | `THEME_HEADER_TEXT` | `#ffffff` | `#ffffff` |
-| `THEME_HEADER_BACKGROUND` | `#25313b` | `#333A45` |
+| `THEME_HEADER_ACCENT_TEXT` | `#7b9ac2` | `#7ea1ff` |
+| `THEME_HEADER_BACKGROUND` | `#25313b` | `#333a45` |
 | `THEME_FOOTER_TEXT` | `#ffffff` | `#ffffff` |
-| `THEME_FOOTER_NEUTRAL_TEXT` | `#999999` | `#999999` |
-| `THEME_FOOTER_BACKGROUND` | `#555555` | `#555555` |
+| `THEME_FOOTER_NEUTRAL_TEXT` | `#adbacd` | `#98afcf` |
+| `THEME_FOOTER_BACKGROUND` | `#344251` | `#344251` |
 
 ## Recommended Docker Registry Usage
 
@@ -167,9 +171,9 @@ services:
     image: registry:2.8.2
     restart: always
     environment:
-      REGISTRY_HTTP_HEADERS_Access-Control-Origin: '[http://registry.example.com]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Origin: '[http://registry-ui.example.com]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Methods: '[HEAD,GET,OPTIONS,DELETE]'
-      REGISTRY_HTTP_HEADERS_Access-Control-Credentials: '[true]'
+      REGISTRY_HTTP_HEADERS_Access-Control-Allow-Credentials: '[true]'
       REGISTRY_HTTP_HEADERS_Access-Control-Allow-Headers: '[Authorization,Accept,Cache-Control]'
       REGISTRY_HTTP_HEADERS_Access-Control-Expose-Headers: '[Docker-Content-Digest]'
       REGISTRY_STORAGE_DELETE_ENABLED: 'true'
@@ -180,26 +184,32 @@ services:
 
 ## Using CORS
 
-Your server should be configured to accept CORS.
+:warning: Before posting issues about CORS, please read the and all created issues.
 
-If your docker registry does not need credentials, you will need to send this HEADER:
+:warning: If you **are using credentials** and your registry is on a different host than your UI, please read the [FAQ about OPTIONS](https://github.com/Joxit/docker-registry-ui#:~:text=Why%20OPTIONS%20(aka%20preflight%20requests)), all the linked issues and [distribution/distribution#4458](https://github.com/distribution/distribution/issues/4458) first. The best way for the UI to work is using `NGINX_PROXY_PASS_URL` or configure your own proxy (nginx, haproxy...) that will be on top of your **docker registry** (and not the UI!) to override OPTIONS requests.
 
+If your docker registry **does not need credentials**, you will need to send this HEADER:
+
+```yml
+http:
+  headers:
     Access-Control-Allow-Origin: ['*']
+    Access-Control-Allow-Headers: ['Accept', 'Cache-Control']
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS'] # Optional
+```
 
 If your docker registry need credentials, you will need to send these HEADERS (you must add the protocol `http`/`https` and the port when not default `80`/`443`):
 
 ```yml
 http:
   headers:
-    Access-Control-Allow-Origin: ['http://registry.example.com']
+    Access-Control-Allow-Origin: ['http://registry-ui.example.com']
     Access-Control-Allow-Credentials: [true]
     Access-Control-Allow-Headers: ['Authorization', 'Accept', 'Cache-Control']
     Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS'] # Optional
 ```
 
 An alternative for CORS issues is a plugin on your browser, more info [here](https://github.com/Joxit/docker-registry-ui/issues/25#issuecomment-621104846) (thank you [xmontero](https://github.com/xmontero)).
-
-:warning: If you are using credential and still having issues, please read the the line about preflight requests and the bug in docker registry server in the [FAQ](#faq) before posting any issues.
 
 ## Using delete
 

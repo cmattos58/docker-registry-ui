@@ -82,6 +82,17 @@ export function getHistoryIcon(attribute) {
       return 'router';
     case 'comment':
       return 'chat';
+    case 'home':
+      return 'home';
+    case 'sources':
+      return 'link';
+    case 'keywords':
+      return 'receipt';
+    case 'name':
+      return 'abc';
+    case 'kubeVersion':
+    case 'appVersion':
+      return '123';
     default:
       if (attribute.startsWith('custom-label-')) {
         return 'label';
@@ -215,6 +226,17 @@ export function decodeURI(url) {
 
 export function truthy(value) {
   return value === true || value === 'true';
+}
+
+/**
+ * only is false if explicitly set to boolean false or string 'false'.
+ * defaults to true in any other case, e.g. if empty.
+ *
+ * @param {string|boolean} value the input value to check
+ * @returns {boolean} false if explicity set, true otherwise
+ */
+export function falsy(value) {
+  return value !== false && value !== 'false';
 }
 
 export function stringToArray(value) {

@@ -6,6 +6,7 @@ sed -i "s~\${PULL_URL}~${PULL_URL}~" index.html
 sed -i "s~\${SINGLE_REGISTRY}~${SINGLE_REGISTRY}~" index.html
 sed -i "s~\${CATALOG_ELEMENTS_LIMIT}~${CATALOG_ELEMENTS_LIMIT}~" index.html
 sed -i "s~\${SHOW_CONTENT_DIGEST}~${SHOW_CONTENT_DIGEST}~" index.html
+sed -i "s~\${SHOW_TAG_HISTORY}~${SHOW_TAG_HISTORY}~" index.html
 sed -i "s~\${DEFAULT_REGISTRIES}~${DEFAULT_REGISTRIES}~" index.html
 sed -i "s~\${READ_ONLY_REGISTRIES}~${READ_ONLY_REGISTRIES}~" index.html
 sed -i "s~\${SHOW_CATALOG_NB_TAGS}~${SHOW_CATALOG_NB_TAGS}~" index.html
@@ -65,7 +66,13 @@ if [ -n "${NGINX_PROXY_PASS_URL}" ] ; then
   sed -i "s,\${NGINX_PROXY_PASS_URL},${NGINX_PROXY_PASS_URL}," /etc/nginx/conf.d/default.conf
   sed -i "s^\${NGINX_PROXY_HEADERS}^$(get_nginx_proxy_headers)^" /etc/nginx/conf.d/default.conf
   sed -i "s^\${NGINX_PROXY_PASS_HEADERS}^$(get_nginx_proxy_pass_headers)^" /etc/nginx/conf.d/default.conf
-  sed -i "s,#!,," /etc/nginx/conf.d/default.conf
+  sed -i "s,#! , ," /etc/nginx/conf.d/default.conf # The space is important here, to not interfer with #!r
+  if [ -n "${NGINX_RESOLVER}" ]; then
+    sed -i "s,\${NGINX_RESOLVER},${NGINX_RESOLVER}," /etc/nginx/conf.d/default.conf
+    sed -i "s,#r,," /etc/nginx/conf.d/default.conf
+  else
+    sed -i "s,#!r, ," /etc/nginx/conf.d/default.conf # The space is for cosmetic here
+  fi
 fi
 
 if [ "$(whoami)" != "root" ]; then
